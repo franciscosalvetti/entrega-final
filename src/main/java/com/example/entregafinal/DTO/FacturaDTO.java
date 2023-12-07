@@ -1,4 +1,4 @@
 package com.example.entregafinal.DTO;
 
-public class FacturaDTO {
+public class FacturaDTO  {
 }
