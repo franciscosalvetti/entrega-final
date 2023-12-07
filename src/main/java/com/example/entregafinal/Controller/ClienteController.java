@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequestMapping("api/v1/clientes")
 @RestController
-public class ClienteController {
+public class ClienteController{
 
     @Autowired
     ClienteService clienteService;
