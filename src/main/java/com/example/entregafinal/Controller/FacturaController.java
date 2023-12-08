@@ -22,6 +22,7 @@ public class FacturaController {
     @PostMapping("/")
     public ResponseEntity<FacturaModel> create(@RequestBody FacturaModel nuevaFactura) throws Exception{
         return new ResponseEntity<>(facturaService.create(nuevaFactura), HttpStatus.CREATED);
+        //return new ResponseEntity<>(nuevaFactura.getLineas().toString(), HttpStatus.CREATED);
     }
 
     // definimos un get para todas las facturas que devuelve una lista de FacturaModel
