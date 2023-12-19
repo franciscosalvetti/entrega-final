@@ -67,12 +67,16 @@ public class FacturaService {
         // que se encargará de decidir si obtiene la fecha de un servicio externo o del sistema directamente
         nuevaFactura.setFecha_creacion(obtenerFechaActual());
 
+        // creamos la nueva factura
         nuevaFactura = this.facturaRepository.save(nuevaFactura);
 
+        // generamos los DetalleFacturas
         generarDetallesFactura(datosFactura.getLineas(), nuevaFactura);
 
+        // descontamos el stock de los productos involucrados
         descontarStockProductos(datosFactura.getLineas());
 
+        // devolvemos una FacturaDTO
         return toDTO(nuevaFactura);
     }
 
