@@ -23,9 +23,11 @@ public class FacturaController {
     FacturaService facturaService;
 
     @PostMapping("/algo")
-    public LocalDate algo() throws Exception {
+    public String algo(@RequestBody FacturaModel nuevaFactura) throws Exception{
+        return nuevaFactura.getLineas().toString();
+    }
 
-        RestTemplate restTemplate = new RestTemplate();
+        /*RestTemplate restTemplate = new RestTemplate();
         final String url = "http://api.timezonedb.com/v2.1/get-time-zone?key=MU852FWV2O1E&format=json&by=zone&zone=America/Argentina/Buenos_Aires";
         try{
             String resultado = restTemplate.getForObject(url, String.class);
@@ -41,7 +43,7 @@ public class FacturaController {
 
             return LocalDate.parse("2023-12-16 18:37:47");
 
-            /*// Imprimir los valores
+            // Imprimir los valores
             System.out.println("Nombre: " + nombre);
             System.out.println("Edad: " + edad);*/
 
@@ -49,19 +51,19 @@ public class FacturaController {
                 return LocalDate.parse(fecha).toString();
             }else{
                 return "no se pudo";
-            }*/
+            }/
 
             //return status+" "+fecha;
         }catch (Exception e){
             return LocalDate.now();
-        }
+        }*/
 
-    }
+    //}
 
     // importamos el servicio de facturas
     // definimos el post para crear nuevas facturas, acepta un FacturaModel como parametros en el body
     @PostMapping("/")
-    public ResponseEntity<FacturaModel> create(@RequestBody FacturaModel nuevaFactura) throws Exception{
+    public ResponseEntity<FacturaDTO> create(@RequestBody FacturaModel nuevaFactura) throws Exception{
         return new ResponseEntity<>(facturaService.create(nuevaFactura), HttpStatus.CREATED);
     }
 

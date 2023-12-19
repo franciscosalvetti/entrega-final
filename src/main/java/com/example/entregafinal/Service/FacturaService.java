@@ -30,7 +30,7 @@ public class FacturaService {
     @Autowired
     DetallesFacturaRepository detallesFacturaRepository;
 
-    public FacturaModel create(FacturaModel datosFactura) throws Exception{
+    public FacturaDTO create(FacturaModel datosFactura) throws Exception{
 
         // realizamos el control sobre el cliente definido en la factura
         boolean checkCliente = checkCliente(datosFactura.getCliente());
@@ -72,7 +72,7 @@ public class FacturaService {
 
         //descontarStockProductos(datosFactura.getLineas());
 
-        return nuevaFactura;
+        return toDTO(nuevaFactura);
     }
 
     private FacturaDTO toDTO(FacturaModel factura){
@@ -87,13 +87,15 @@ public class FacturaService {
         List<DetallesFacturaModel> lineas = this.detallesFacturaRepository.findAll();
         List<DetallesFacturaModel> lineasFactura = new ArrayList<>();
 
-        for (int i = 0; i < lineas.size(); i++) {
-            if(lineas.get(i).getFactura().getId() == factura.getId()){
-                lineasFactura.add(lineas.get(i));
+        if(!lineas.isEmpty()){
+            for (int i = 0; i < lineas.size(); i++) {
+                if(lineas.get(i).getFactura().getId() == factura.getId()){
+                    lineasFactura.add(lineas.get(i));
+                }
             }
         }
 
-        facturaDTO.setLineas(crearLineasDTO(factura.getLineas()));
+        facturaDTO.setLineas(crearLineasDTO(lineasFactura));
 
         return facturaDTO;
     }
@@ -101,14 +103,16 @@ public class FacturaService {
     private List<DetallesFacturaDTO> crearLineasDTO(List<DetallesFacturaModel> lineas){
         List<DetallesFacturaDTO> lineasDTO = new ArrayList<>();
 
-        for (DetallesFacturaModel linea : lineas){
-            DetallesFacturaDTO dto = new DetallesFacturaDTO();
-            dto.setId(linea.getId());
-            dto.setCantidad(linea.getCantidadProductos());
-            dto.setProducto_id(linea.getProductos().getId());
-            dto.setImporte(linea.getImporte());
+        if(!lineas.isEmpty()){
+            for (DetallesFacturaModel linea : lineas){
+                DetallesFacturaDTO dto = new DetallesFacturaDTO();
+                dto.setId(linea.getId());
+                dto.setCantidad(linea.getCantidadProductos());
+                dto.setProducto_id(linea.getProductos().getId());
+                dto.setImporte(linea.getImporte());
 
-            lineasDTO.add(dto);
+                lineasDTO.add(dto);
+            }
         }
 
         return lineasDTO;

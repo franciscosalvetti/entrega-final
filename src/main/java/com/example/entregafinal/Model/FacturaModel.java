@@ -32,7 +32,6 @@ public class FacturaModel {
     // definimos el total de la factura
     private Double total;
 
-    @OneToMany(mappedBy = "factura")
-    @JsonIgnore
+    @OneToMany(mappedBy = "factura", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<DetallesFacturaModel> lineas;
 }
