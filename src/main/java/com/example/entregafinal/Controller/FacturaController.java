@@ -22,7 +22,7 @@ public class FacturaController {
     @Autowired
     FacturaService facturaService;
 
-    @PostMapping("/algo")
+    /*@PostMapping("/algo")
     public String algo(@RequestBody FacturaModel nuevaFactura) throws Exception{
         return nuevaFactura.getLineas().toString();
     }
