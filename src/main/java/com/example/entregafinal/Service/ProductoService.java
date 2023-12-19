@@ -36,6 +36,7 @@ public class ProductoService {
             throw new IllegalArgumentException("El precio del producto es inválido. No puede ser vacío, nulo o menor o igual a 0.");
         }
 
+        // una vez se pasaron todas las validaciones, procedemos a crear el producto y devolverlo al controller
         return this.productoRepository.save(nuevoProducto);
     }
 

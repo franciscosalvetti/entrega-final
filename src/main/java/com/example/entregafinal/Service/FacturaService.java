@@ -1,18 +1,21 @@
 package com.example.entregafinal.Service;
 
-import com.example.entregafinal.Model.ClienteModel;
-import com.example.entregafinal.Model.DetallesFacturaModel;
-import com.example.entregafinal.Model.FacturaModel;
-import com.example.entregafinal.Model.ProductoModel;
+import com.example.entregafinal.DTO.DetallesFacturaDTO;
+import com.example.entregafinal.DTO.FacturaDTO;
+import com.example.entregafinal.Model.*;
 import com.example.entregafinal.Repository.ClienteRepository;
+import com.example.entregafinal.Repository.DetallesFacturaRepository;
 import com.example.entregafinal.Repository.FacturaRepository;
 import com.example.entregafinal.Repository.ProductoRepository;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class FacturaService {
@@ -24,23 +27,227 @@ public class FacturaService {
     ClienteRepository clienteRepository;
     @Autowired
     ProductoRepository productoRepository;
+    @Autowired
+    DetallesFacturaRepository detallesFacturaRepository;
 
-    public FacturaModel create(FacturaModel nuevaFactura) throws Exception{
+    public FacturaModel create(FacturaModel datosFactura) throws Exception{
 
         // realizamos el control sobre el cliente definido en la factura
-        boolean checkCliente = checkCliente(nuevaFactura.getCliente());
+        boolean checkCliente = checkCliente(datosFactura.getCliente());
         if(!checkCliente){
             throw new IllegalArgumentException("La factura no se pudo crear, el cliente no existe.");
         }
 
-        // realizamos el control sobre los productos incluidos en la factura
-        List<DetallesFacturaModel> lineas = nuevaFactura.getLineas();
-        boolean checkProductos = checkProductos(lineas);
-        if(!checkProductos){
-            throw new IllegalArgumentException("La factura no se pudo crear, revise los productos");
+        // realizamos le control sobre la existencia del campo de lineas en los datos entrantes
+        if(datosFactura.getLineas() == null || datosFactura.getLineas().size() <= 0){
+            // vemos que la factura tiene lineas vacío o directamente no tiene líneas de productos
+            throw new IllegalArgumentException("La facturano se pudo crear, no incluye productos.");
+        }else{
+            // realizamos el control sobre los productos incluidos en la factura
+            List<DetallesFacturaModel> lineas = datosFactura.getLineas();
+            boolean checkProductos = checkProductos(lineas);
+            if(!checkProductos){
+                throw new IllegalArgumentException("La factura no se pudo crear, revise los productos");
+            }
         }
 
-        return null;
+        // creamos una nueva instancia
+        FacturaModel nuevaFactura = new FacturaModel();
+
+        // como ya pasamos el chequeo sobre el cliente, asignamos el cliente
+        // que recibimos en la fima del metodo a la variable factura
+        nuevaFactura.setCliente(datosFactura.getCliente());
+
+        // mediante la funcion obtenerTotal, a la que le pasamos como parámetro las líneas que
+        // vienen dentro de la variable en la firma del método, obtenermos el monto total del la factura
+        nuevaFactura.setTotal(obtenerTotal(datosFactura.getLineas()));
+
+        // asignamos la fecha de creación con el resultado del método obtenerFechaActual
+        // que se encargará de decidir si obtiene la fecha de un servicio externo o del sistema directamente
+        nuevaFactura.setFecha_creacion(obtenerFechaActual());
+
+        nuevaFactura = this.facturaRepository.save(nuevaFactura);
+
+        generarDetallesFactura(datosFactura.getLineas(), nuevaFactura);
+
+        //descontarStockProductos(datosFactura.getLineas());
+
+        return nuevaFactura;
+    }
+
+    private FacturaDTO toDTO(FacturaModel factura){
+        FacturaDTO facturaDTO = new FacturaDTO();
+
+        facturaDTO.setId(factura.getId());
+        facturaDTO.setCliente(factura.getCliente());
+        facturaDTO.setTotal(factura.getTotal());
+        facturaDTO.setFecha(factura.getFecha_creacion());
+
+
+        List<DetallesFacturaModel> lineas = this.detallesFacturaRepository.findAll();
+        List<DetallesFacturaModel> lineasFactura = new ArrayList<>();
+
+        for (int i = 0; i < lineas.size(); i++) {
+            if(lineas.get(i).getFactura().getId() == factura.getId()){
+                lineasFactura.add(lineas.get(i));
+            }
+        }
+
+        facturaDTO.setLineas(crearLineasDTO(factura.getLineas()));
+
+        return facturaDTO;
+    }
+
+    private List<DetallesFacturaDTO> crearLineasDTO(List<DetallesFacturaModel> lineas){
+        List<DetallesFacturaDTO> lineasDTO = new ArrayList<>();
+
+        for (DetallesFacturaModel linea : lineas){
+            DetallesFacturaDTO dto = new DetallesFacturaDTO();
+            dto.setId(linea.getId());
+            dto.setCantidad(linea.getCantidadProductos());
+            dto.setProducto_id(linea.getProductos().getId());
+            dto.setImporte(linea.getImporte());
+
+            lineasDTO.add(dto);
+        }
+
+        return lineasDTO;
+    }
+
+    // separamos la logica de la obtención de la fecha en un metodo aparte para que el código del método
+    // principal no quede tan cargado
+    private LocalDate obtenerFechaActual(){
+
+        LocalDate fechaApp = LocalDate.now();
+
+        // vamos a obtener la fecha de un servicio externo
+        RestTemplate restTemplate = new RestTemplate();
+        // definimos la url, en este caso es de un servicio encontrado en la web, con un apikey generada en su sitio
+        // y le pedimos por medio del método zona, para la zona de America/Argentina/Buenos_Aires
+        String resultado = null;
+        final String url = "http://api.timezonedb.com/v2.1/get-time-zone?key=MU852FWV2O1E&format=json&by=zone&zone=America/Argentina/Buenos_Aires";
+        try{
+            resultado = restTemplate.getForObject(url, String.class);
+            // instanciamos una dependencia que nos permita manejar json
+            Gson gson = new Gson();
+
+            // por medio de Gson vamos a convertir al json que nos devuelve el servicio de la hora en un
+            // objeto de java llamado HorarioModel
+            // Convertir el JSON a un objeto Java
+            HorarioModel horario = gson.fromJson(resultado, HorarioModel.class);
+
+            // Acceder a los campos del objeto Java
+            // creamos la variable status para ver si la petición esta ok o no
+            String estadoPeticion = horario.getEstadoPeticion();
+
+            // creamos la variable fechaApi para almacenar la posible fecha, dependiendo si la
+            // petición se realizó existosamente o no
+            String fechaApi = horario.getFecha();
+
+            if(Objects.equals(estadoPeticion, "OK")){
+                return LocalDate.parse(fechaApi);
+            }else{
+                return fechaApp;
+            }
+        }catch (Exception e){
+            return fechaApp;
+        }
+    }
+
+    // creamos un metodo para que una vez generada la factura y los detalles de factura
+    // se descuenten las unidades compradas de los productos correspondientes
+    private void descontarStockProductos(List<DetallesFacturaModel> lineas){
+        // creamos una variable producto para ir obteniendo los productos presentes en la lista
+        ProductoModel producto = null;
+
+        for (int i = 0; i < lineas.size(); i++) {
+            // en la caja productoDb ponemos el posible producto correspondiente a la linea que estamos recorriendo
+            Optional<ProductoModel> productoDb = productoRepository.findById(lineas.get(i).getProductos().getId());
+            // directamente obtenemos el producto de la caja productoDb porque estos datos han pasado
+            // las validaciones previas a la hora de crear la factura en la db
+            producto = productoDb.get();
+
+            // seteamos el nuevo stock del producto de la linea
+            // que corresponde al stock que tenia el producto menos la cantidad señalada en la linea
+            producto.setStock(producto.getStock() - lineas.get(i).getCantidadProductos());
+
+            // guardamos el producto para actualizar el stock en la db
+            this.productoRepository.save(producto);
+        }
+    }
+
+    // definimos un método para generar en la db los detalles de factura correspondientes
+    // a las lineas incluidas en la info entrante al método create, y además para asignarle
+    // el id de la factura recientemente creada a los nuevos detallesFactura a crear
+    private void generarDetallesFactura(List<DetallesFacturaModel> lineas, FacturaModel factura){
+
+        // creamos una variable producto para ir obteniendo los productos presentes en la lista
+        ProductoModel producto = null;
+        // creamos una variable monto para ir acumulando los importes de cada producto
+        Double importeLinea = Double.valueOf(0);
+
+        for (int i = 0; i < lineas.size(); i++) {
+            // al entrar al ciclo reseteamos la variable detallesFactura
+            // para generar una nueva linea con nuevos datos
+            DetallesFacturaModel detallesFactura = new DetallesFacturaModel();
+
+            // en la caja productoDb ponemos el posible producto correspondiente a la linea que estamos recorriendo
+            Optional<ProductoModel> productoDb = productoRepository.findById(lineas.get(i).getProductos().getId());
+            // directamente obtenemos el producto de la caja productoDb porque estos datos han pasado
+            // las validaciones previas a la hora de crear la factura en la db
+            producto = productoDb.get();
+
+            // calculamos el importe de la linea resultante entre la cantidad y el precio del producto
+            // de la linea que estamos recorriendo
+            importeLinea = lineas.get(i).getCantidadProductos() * producto.getPrecio();
+
+            // asignación de campos para crear el detallesFactura correspondiente a la linea que estamos recorriendo
+
+            // seteamos la factura
+            detallesFactura.setFactura(factura);
+
+            // seteamos el importe
+            detallesFactura.setImporte(importeLinea);
+
+            // seteamos la cantidad del producto
+            detallesFactura.setCantidadProductos(lineas.get(i).getCantidadProductos());
+
+            // seteamos el producto
+            detallesFactura.setProductos(producto);
+
+            // generamos el detallesFactura correspondiente a la línea que estamos recorriendo
+            this.detallesFacturaRepository.save(detallesFactura);
+        }
+    }
+
+    // definimos el método obtenerTotal para poder obtener le monto total que la factura
+    // debe llevar cuando se vaya a crear en la db
+    private Double obtenerTotal(List<DetallesFacturaModel> lineas){
+
+        // creamos una variable producto para ir obteniendo los productos presentes en la lista
+        ProductoModel producto = null;
+        // creamos una variable monto para ir acumulando los importes de cada producto
+        Double monto = Double.valueOf(0);
+
+        for (int i = 0; i < lineas.size(); i++) {
+
+            // en la caja productoDb ponemos el posible producto correspondiente a la linea que estamos recorriendo
+            Optional<ProductoModel> productoDb = productoRepository.findById(lineas.get(i).getProductos().getId());
+            if(!productoDb.isPresent()){
+                // devolvemos una excepción en vez de retornar false al metodo create porque asi tenemos
+                // una mejor precisión sobre el error que hace que NO se pueda crear la factura. En este caso
+                // es porque el producto no existe
+                throw new IllegalArgumentException("No se pudo crear la facutra. El producto ID: "+lineas.get(i).getProductos().getId()+" no existe.");
+            }else{
+                // si el producto esta presente en la caja productoDb, lo obtenermos para seguir haciendo comprobaciones
+                producto = productoDb.get();
+
+                // obtenemos la cantidad deseada de la linea que estamos recorriendo
+                monto += lineas.get(i).getCantidadProductos() * producto.getPrecio();
+            }
+        }
+
+        return monto;
     }
 
     private boolean checkCliente(ClienteModel cliente){
@@ -93,55 +300,33 @@ public class FacturaService {
         return true;
     }
 
-    /*public FacturaModel create(FacturaModel nuevaFactura) throws Exception {
+    // método que devuelve todas las facturas que existen cargadas se encarga de
+    // conseguir todas las FacturaModel y convertirlas en FacturaDTO antes de devolverlo
+    public List<FacturaDTO> findAll(){
+        List<FacturaModel> listaFacturas = this.facturaRepository.findAll();
+        List<FacturaDTO> listaFacturasDTO = new ArrayList<>();
 
-        // instanciamos una factura nueva llamado factura para llevar adelante la los controles previos a la creación en la db
-        FacturaModel factura = new FacturaModel();
-
-        // implementamos los controles pertinentes para cada campo de la clase Factura
-        Optional<ClienteModel> clienteDb = clienteRepository.findById(nuevaFactura.getCliente().getId());
-        ClienteModel cliente = null;
-        if(clienteDb.isPresent()){
-            cliente = clienteDb.get();
-        }else{
-            throw new IllegalArgumentException("El cliente designado no se pudo encontrar");
+        for (int i = 0; i < listaFacturas.size(); i++) {
+            listaFacturasDTO.add(toDTO(listaFacturas.get(i)));
         }
 
-        LocalDate fecha = nuevaFactura.getFecha_creacion();
-        Double total = nuevaFactura.getTotal();
-
-        // el control sobre la fecha No se hace acá por completo, hay una excepción personalizada que se desarrolla en
-        // dentro del paquete model que se encarga del formato propiamente dicho, acá solo se testea
-        // que la fecha de nacimiento sea distinta de vacio.
-        if(String.valueOf(fecha) == null){
-            throw new IllegalArgumentException("La fecha de la factura no puede ser vacía");
-        }
-
-        // una vez pasamos los controles asignamos con los setters provenientes de @Data los datos que recibe el método create
-        nuevaFactura.setFecha_creacion(fecha);
-        nuevaFactura.setCliente(cliente);
-        nuevaFactura.setTotal(total);
-
-        // retornamos la factura creada
-        return this.facturaRepository.save(nuevaFactura);
-    }*/
-
-    public List<FacturaModel> findAll(){
-        return this.facturaRepository.findAll();
+        return listaFacturasDTO;
     }
 
-    public FacturaModel findById(Long id){
+    // método usado para encontrar una factura en particular según el ID ingresado por parámetro
+    public FacturaDTO findById(Long id){
         Optional<FacturaModel> facturaDb = this.facturaRepository.findById(id);
         if(facturaDb.isPresent()){
             FacturaModel facturaEncontrada = facturaDb.get();
 
-            return facturaEncontrada;
+            return toDTO(facturaEncontrada);
         }else{
-            return null;
+            throw new IllegalArgumentException("La factura no existe.");
         }
     }
 
-    public FacturaModel update(FacturaModel factura, Long id){
+
+    public FacturaDTO update(FacturaModel factura, Long id){
         Optional<FacturaModel> facturaDb = this.facturaRepository.findById(id);
         if(facturaDb.isPresent()){
             FacturaModel facturaEncontrada = facturaDb.get();
@@ -149,7 +334,7 @@ public class FacturaService {
             facturaEncontrada.setTotal(factura.getTotal());
             facturaEncontrada.setFecha_creacion(factura.getFecha_creacion());
 
-            return this.facturaRepository.save(facturaEncontrada);
+            return toDTO(this.facturaRepository.save(facturaEncontrada));
         }else{
             return null;
         }

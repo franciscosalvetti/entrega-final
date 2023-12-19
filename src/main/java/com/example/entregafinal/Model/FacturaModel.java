@@ -1,6 +1,7 @@
 package com.example.entregafinal.Model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -25,12 +26,13 @@ public class FacturaModel {
     private ClienteModel cliente;
 
     // definimos la fecha de creación de la factura, columna fecha_creacion en la tabla de factura en schema.sql
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate fecha_creacion;
 
     // definimos el total de la factura
     private Double total;
 
-    @OneToMany
+    @OneToMany(mappedBy = "factura")
+    @JsonIgnore
     private List<DetallesFacturaModel> lineas;
 }
