@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -70,7 +71,7 @@ public class FacturaService {
 
         generarDetallesFactura(datosFactura.getLineas(), nuevaFactura);
 
-        //descontarStockProductos(datosFactura.getLineas());
+        descontarStockProductos(datosFactura.getLineas());
 
         return toDTO(nuevaFactura);
     }
@@ -120,9 +121,9 @@ public class FacturaService {
 
     // separamos la logica de la obtención de la fecha en un metodo aparte para que el código del método
     // principal no quede tan cargado
-    private LocalDate obtenerFechaActual(){
+    private LocalDateTime obtenerFechaActual(){
 
-        LocalDate fechaApp = LocalDate.now();
+        LocalDateTime fechaApp = LocalDateTime.now();
 
         // vamos a obtener la fecha de un servicio externo
         RestTemplate restTemplate = new RestTemplate();
@@ -149,7 +150,7 @@ public class FacturaService {
             String fechaApi = horario.getFecha();
 
             if(Objects.equals(estadoPeticion, "OK")){
-                return LocalDate.parse(fechaApi);
+                return LocalDateTime.parse(fechaApi);
             }else{
                 return fechaApp;
             }

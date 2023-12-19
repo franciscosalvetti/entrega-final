@@ -5,6 +5,7 @@ import com.example.entregafinal.Model.DetallesFacturaModel;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -14,7 +15,7 @@ public class FacturaDTO  {
 
     private ClienteModel cliente;
 
-    private LocalDate fecha;
+    private LocalDateTime fecha;
 
     private Double total;
 

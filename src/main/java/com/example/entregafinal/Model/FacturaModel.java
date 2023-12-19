@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data                       // importamos getters y setters
@@ -27,7 +28,7 @@ public class FacturaModel {
 
     // definimos la fecha de creación de la factura, columna fecha_creacion en la tabla de factura en schema.sql
     //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate fecha_creacion;
+    private LocalDateTime fecha_creacion;
 
     // definimos el total de la factura
     private Double total;
