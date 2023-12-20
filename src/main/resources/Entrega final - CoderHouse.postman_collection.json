@@ -1,0 +1,317 @@
+{
+	"info": {
+		"_postman_id": "4d9e6618-8f4a-4e29-9c12-488160120c24",
+		"name": "Entrega final - CoderHouse",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8428656"
+	},
+	"item": [
+		{
+			"name": "Get all clientes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/clientes/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"clientes",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all productos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/productos/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"productos",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all facturas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/facturas/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"facturas",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get clientes/id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/clientes/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"clientes",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get productos/id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/productos/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"productos",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get facturas/id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/facturas/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"facturas",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Clientes",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"nombre\":\"carlitos\",\r\n    \"apellido\":\"maslatón\",\r\n    \"numeroDocumento\":\"12584322\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9500/api/v1/clientes/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"clientes",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Productos",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"descripcion\":\"zapatillas A\",\r\n    \"codigo\":\"01-zapa\",\r\n    \"stock\": 9,\r\n    \"precio\": 2320.55\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9500/api/v1/productos/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"productos",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Facturas",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"cliente\": {\r\n        \"id\": 5\r\n    },\r\n    \"lineas\": [\r\n        {\r\n            \"productos\": {\r\n                \"id\": 2\r\n            },\r\n            \"cantidadProductos\":3\r\n        },\r\n        {\r\n            \"productos\": {\r\n                \"id\": 1\r\n            },\r\n            \"cantidadProductos\":1\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9500/api/v1/facturas/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"facturas",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete cliente",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/clientes/14",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"clientes",
+						"14"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete producto",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/productos/14",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"productos",
+						"14"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete factura",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9500/api/v1/facturas/14",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9500",
+					"path": [
+						"api",
+						"v1",
+						"facturas",
+						"14"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener hora",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Usado para test",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
