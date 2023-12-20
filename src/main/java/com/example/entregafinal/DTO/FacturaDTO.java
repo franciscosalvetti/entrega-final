@@ -20,4 +20,6 @@ public class FacturaDTO  {
     private Double total;
 
     private List<DetallesFacturaDTO> lineas;
+
+    private int cantidad;
 }

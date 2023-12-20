@@ -8,6 +8,19 @@ import lombok.Data;
 @Data
 public class HorarioModel {
 
-    private String estadoPeticion;
-    private String fecha;
+    private String status;
+    private String message;
+    private String countryCode;
+    private String countryName;
+    private String regionName;
+    private String cityName;
+    private String zoneName;
+    private String abbrevation;
+    private Long gmtOffset;
+    private String dst;
+    private String zoneStart;
+    private String zoneEnd;
+    private String nextAbbreviation;
+    private Long timestamp;
+    private String formatted;
 }

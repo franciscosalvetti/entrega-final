@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("api/v1/facturas")
@@ -22,43 +24,49 @@ public class FacturaController {
     @Autowired
     FacturaService facturaService;
 
-    /*@PostMapping("/algo")
-    public String algo(@RequestBody FacturaModel nuevaFactura) throws Exception{
-        return nuevaFactura.getLineas().toString();
-    }
+    @PostMapping("/algo")
+    public String algo() throws Exception{
+        LocalDateTime fechaApp = LocalDateTime.now();
 
-        /*RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
         final String url = "http://api.timezonedb.com/v2.1/get-time-zone?key=MU852FWV2O1E&format=json&by=zone&zone=America/Argentina/Buenos_Aires";
-        try{
+        //final String url = "http://worldclockapi.com/api/json/utc/now";
+        //try{
             String resultado = restTemplate.getForObject(url, String.class);
+
+            //return resultado.toString();
 
             Gson gson = new Gson();
 
             // Convertir el JSON a un objeto Java
             HorarioModel horario = gson.fromJson(resultado, HorarioModel.class);
 
-            // Acceder a los campos del objeto Java
-            String status = horario.getEstadoPeticion();
-            String fecha = horario.getFecha();
+            //return horario.getStatus();
+            //return "Retornamos desde el servicio externo: "+horario.toString();
 
-            return LocalDate.parse("2023-12-16 18:37:47");
+            // Acceder a los campos del objeto Java
+            String status = horario.getStatus();
+            String fecha = horario.getFormatted();
+
+            /*return LocalDate.parse("2023-12-16 18:37:47");
 
             // Imprimir los valores
             System.out.println("Nombre: " + nombre);
             System.out.println("Edad: " + edad);*/
 
-            /*if(Objects.equals(status, "OK")){
-                return LocalDate.parse(fecha).toString();
+            //return LocalDateTime.parse(fecha.toString().replace(" ","T"))+" "+fechaApp;
+
+            if(Objects.equals(status, "OK")){
+                return LocalDateTime.parse(fecha.replace(" ","T")).toString();
             }else{
                 return "no se pudo";
-            }/
+            }
 
-            //return status+" "+fecha;
-        }catch (Exception e){
-            return LocalDate.now();
+            //return status+" "+fecha;*/
+        /*}catch (Exception e){
+            return "Retornamos la fecha generada en la app: "+fechaApp.toString();
         }*/
-
-    //}
+    }
 
     // importamos el servicio de facturas
     // definimos el post para crear nuevas facturas, acepta un FacturaModel como parametros en el body

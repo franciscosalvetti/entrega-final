@@ -81,33 +81,64 @@ public class FacturaService {
     }
 
     private FacturaDTO toDTO(FacturaModel factura){
+        // instanciamos una nueva instancia de FacturaDTO en blanco para devolver
         FacturaDTO facturaDTO = new FacturaDTO();
 
+        // inicializamos la cantidad total de productos en la factura a 0
+        int cantidad = 0;
+
+        // traspasamos los datos que tenemos de FacturaModel a FacturaDTO
+
+        // seteamos el ID
         facturaDTO.setId(factura.getId());
-        facturaDTO.setCliente(factura.getCliente());
+
+        // seteamos el cliente de la factura
+        ClienteModel cliente = clienteRepository.getById(factura.getCliente().getId());
+        facturaDTO.setCliente(cliente);
+
+        // seteamos el importe total de la factura
         facturaDTO.setTotal(factura.getTotal());
+        // seteamos la fecha de creacion
         facturaDTO.setFecha(factura.getFecha_creacion());
 
-
+        // obtenemos todos los detalles de factura existentes
         List<DetallesFacturaModel> lineas = this.detallesFacturaRepository.findAll();
+        // creamos una lista nueva en blanco para agregar los detalles de factura
+        // que pertenezcan a la factura que pasamos por parametro en la firma del metodo
         List<DetallesFacturaModel> lineasFactura = new ArrayList<>();
 
+        // si lineas no está vacio, lo vamos a recorrer para ir rellenando la lista
+        // que contiene los detalles de factura de la factura que recibimos por paremtro
         if(!lineas.isEmpty()){
             for (int i = 0; i < lineas.size(); i++) {
+
+                // si el detalle de factura que recorremos tiene el id de la factura que recibimos
+                // lo agregamos a la lista
                 if(lineas.get(i).getFactura().getId() == factura.getId()){
                     lineasFactura.add(lineas.get(i));
+
+                    // sumamos la cantidad de productos a la variable en la que juntamos las cantidades totales
+                    cantidad += lineas.get(i).getCantidadProductos();
                 }
             }
         }
 
+        // terminamos de agregar las lineas resultantes a la FacturaDTO
         facturaDTO.setLineas(crearLineasDTO(lineasFactura));
+        // seteamos la cantidad de productos vendidos
+        facturaDTO.setCantidad(cantidad);
 
+        // retornamos la FacturaDTO resultante
         return facturaDTO;
     }
 
+    // metodo usado para convertir los DetallesFacturaModel a DetallesFacturaDTO a fin de
+    // agregarlos a la FacturaDTO que devuelve el método toDTO() de este servicio
     private List<DetallesFacturaDTO> crearLineasDTO(List<DetallesFacturaModel> lineas){
+        // instanciamos una nueva lista de DetallesFacturaDTO
         List<DetallesFacturaDTO> lineasDTO = new ArrayList<>();
 
+        // si lineas no está vacío, ciclamos para traspasar los datos de DetallesFacturaModel a DetallesFacturaDTO
         if(!lineas.isEmpty()){
             for (DetallesFacturaModel linea : lineas){
                 DetallesFacturaDTO dto = new DetallesFacturaDTO();
@@ -120,21 +151,30 @@ public class FacturaService {
             }
         }
 
+        // retornamos los DetallesFacturaDTO
         return lineasDTO;
     }
 
     // separamos la logica de la obtención de la fecha en un metodo aparte para que el código del método
     // principal no quede tan cargado
     private LocalDateTime obtenerFechaActual(){
-
+        // creamos una variable con la fecha actual, creada en nuestro
+        // sistema para usar si el servicio externo no esta disponible
         LocalDateTime fechaApp = LocalDateTime.now();
 
         // vamos a obtener la fecha de un servicio externo
         RestTemplate restTemplate = new RestTemplate();
+
+        // creamos la variable que obtendrá el resultado del servicio externo
+        String resultado = null;
+
+        // opte por buscar otro servicio externo que me de la hora actual dado que el que figuraba en el
+        // enunciado del trabajo no me respondió en ningún momento, me devolvía siempre error 503
+
         // definimos la url, en este caso es de un servicio encontrado en la web, con un apikey generada en su sitio
         // y le pedimos por medio del método zona, para la zona de America/Argentina/Buenos_Aires
-        String resultado = null;
         final String url = "http://api.timezonedb.com/v2.1/get-time-zone?key=MU852FWV2O1E&format=json&by=zone&zone=America/Argentina/Buenos_Aires";
+
         try{
             resultado = restTemplate.getForObject(url, String.class);
             // instanciamos una dependencia que nos permita manejar json
@@ -145,16 +185,16 @@ public class FacturaService {
             // Convertir el JSON a un objeto Java
             HorarioModel horario = gson.fromJson(resultado, HorarioModel.class);
 
-            // Acceder a los campos del objeto Java
+            // Acceder a los campos del objeto HorarioModel de java
             // creamos la variable status para ver si la petición esta ok o no
-            String estadoPeticion = horario.getEstadoPeticion();
+            String status = horario.getStatus();
 
             // creamos la variable fechaApi para almacenar la posible fecha, dependiendo si la
             // petición se realizó existosamente o no
-            String fechaApi = horario.getFecha();
+            String fechaFormatted = horario.getFormatted();
 
-            if(Objects.equals(estadoPeticion, "OK")){
-                return LocalDateTime.parse(fechaApi);
+            if(Objects.equals(status, "OK")){
+                return LocalDateTime.parse(fechaFormatted.replace(" ","T"));
             }else{
                 return fechaApp;
             }
